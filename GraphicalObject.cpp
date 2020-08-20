@@ -137,16 +137,16 @@ GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile,float OffsetX
 	pGFX->pImmediateContext->VSSetConstantBuffers(0u, 1u, pCBuffTranform.GetAddressOf());
 
 }
-
-void GraphicalObject::SetUVcord( float LowerBoundX, float HigherBoundX, float LowerBoundY,float HigherBoundY)
+//Give number area in pixel cord u want to draw 
+void GraphicalObject::SetUVcord( int LowerBoundX, int HigherBoundX, int LowerBoundY, int HigherBoundY)
 {
 	HRESULT hr;
 
 	UVTransformer UVTransformer2;
-	UVTransformer2.HigherBoundX = HigherBoundX;
-	UVTransformer2.LowerBoundX = LowerBoundX;
-	UVTransformer2.HigherBoundY = HigherBoundY;
-	UVTransformer2.LowerBoundY = LowerBoundY;
+	UVTransformer2.HigherBoundX = (float)HigherBoundX/Img->GetWidth();
+	UVTransformer2.LowerBoundX = (float)LowerBoundX/ Img->GetWidth();
+	UVTransformer2.HigherBoundY = (float)HigherBoundY/ Img->GetHeight();
+	UVTransformer2.LowerBoundY = (float)LowerBoundY/Img->GetHeight();
 
 	D3D11_MAPPED_SUBRESOURCE	mappedData;
 	hr=pGFX->pImmediateContext->Map(pCBuffUV.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedData);

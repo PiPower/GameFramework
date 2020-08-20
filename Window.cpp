@@ -324,7 +324,10 @@ LRESULT Window::HandleMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		width = LOWORD(lParam);
 		height = HIWORD(lParam);
-		if (pDx11 != nullptr) pDx11->Resize(hwnd, width, height);
+		if (pDx11 != nullptr)
+		{
+			pDx11->Resize(hwnd, width, height);
+		}
 		break;
 	}
 

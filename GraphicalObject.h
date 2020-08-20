@@ -12,6 +12,7 @@ public:
 	void Move(float OffsetX = 0, float OffsetY = 0);
 	void Scale(float ScaleX = 1, float ScaleY = 1);
 	void Rotate(float RotationAngle);
+	std::vector<DirectX::XMFLOAT2> GetVertecies();
 	void Draw();
 protected:
 	struct UVTransformer
@@ -25,12 +26,17 @@ protected:
 	{
 		DirectX::XMMATRIX transforms;
 	};
+	struct CollRect
+	{
+		DirectX::XMFLOAT2  Vectors[4];
+	};
 protected:
 	// Edge order: TopLeft,TopRigt,BottomLeft,BottomRight
 
 	UVTransformer  UVTransform;
 	PositionTransformer PosTranform;
 	static std::vector<Point> Rectangle;
+	static CollRect  CollisionRectangle;
 	float proportion;
 	static bool init;
 	float OffsetX;

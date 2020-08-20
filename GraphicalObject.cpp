@@ -4,24 +4,38 @@ using namespace Microsoft::WRL;
 using namespace DirectX;
 
 std::vector<Point> GraphicalObject::Rectangle;
+GraphicalObject::CollRect GraphicalObject::CollisionRectangle;
 bool  GraphicalObject::init = false;
 
-GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile,float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle)
+GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile, float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle)
 	:
- pGFX(gfx), Img(imgFile),OffsetX(OffsetX), OffsetY(OffsetY),ScaleX(ScaleX), ScaleY(ScaleY),RotationAngle(RotationAngle)
+	pGFX(gfx), Img(imgFile), OffsetX(OffsetX), OffsetY(OffsetY), ScaleX(ScaleX), ScaleY(ScaleY), RotationAngle(RotationAngle)
 {
-	this->proportion = (float)pGFX->width/ (float)pGFX->height;
+	this->proportion = (float)pGFX->width / (float)pGFX->height;
+
+	assert(gfx != nullptr);
+	
+	CollisionRectangle.Vectors[0].x = -1.0f;
+	CollisionRectangle.Vectors[0].y = 1.0f;
+
+	CollisionRectangle.Vectors[1].x = 1.0f;
+	CollisionRectangle.Vectors[1].y = 1.0f;
+
+	CollisionRectangle.Vectors[2].x = -1.0f;
+	CollisionRectangle.Vectors[2].y = -1.0f;
+
+	CollisionRectangle.Vectors[3].x = 1.0f;
+	CollisionRectangle.Vectors[3].y = -1.0f;
 
 	indicies.push_back(0); indicies.push_back(1); indicies.push_back(3);
 	indicies.push_back(0); indicies.push_back(3); indicies.push_back(2);
-	assert(gfx != nullptr);
 	//---------- Creating Rect-------------------------------------------------------------
 	if (!GraphicalObject::init)
 	{
-		Rectangle.push_back(Point(-1, 1, 0, 0));
-		Rectangle.push_back(Point(1, 1, 1, 0));
-		Rectangle.push_back(Point(-1, -1, 0, 1));
-		Rectangle.push_back(Point(1, -1, 1, 1));
+	     Rectangle.push_back(Point(-1, 1, 0, 0));
+	     Rectangle.push_back(Point(1, 1, 1, 0));
+	     Rectangle.push_back(Point(-1, -1, 0, 1));
+	     Rectangle.push_back(Point(1, -1, 1, 1));
 	}
 
 	GraphicalObject::init = true;
@@ -119,10 +133,9 @@ GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile,float OffsetX
 	D3D11_SUBRESOURCE_DATA sbd3;
 	sbd3.pSysMem = &UVTransform;
 	pGFX->pDevice->CreateBuffer(&cbd, &sbd3, &pCBuffUV);
-	pGFX->pImmediateContext->PSSetConstantBuffers(0u, 1u, pCBuffUV.GetAddressOf());
 
 	PosTranform.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle)
-	*XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0)  *XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
+	*XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0)  *XMMatrixTranslation(this->OffsetX, this->OffsetY * proportion, 0));
 
 
 	D3D11_BUFFER_DESC cbd2 = {};
@@ -134,7 +147,6 @@ GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile,float OffsetX
 	D3D11_SUBRESOURCE_DATA sbd4;
 	sbd4.pSysMem = &PosTranform;
 	hr = pGFX->pDevice->CreateBuffer(&cbd2, &sbd4, &pCBuffTranform);
-	pGFX->pImmediateContext->VSSetConstantBuffers(0u, 1u, pCBuffTranform.GetAddressOf());
 
 }
 //Give number area in pixel cord u want to draw 
@@ -151,6 +163,9 @@ void GraphicalObject::SetUVcord( int LowerBoundX, int HigherBoundX, int LowerBou
 	D3D11_MAPPED_SUBRESOURCE	mappedData;
 	hr=pGFX->pImmediateContext->Map(pCBuffUV.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedData);
 	memcpy(mappedData.pData, &UVTransformer2, sizeof(UVTransformer2));
+
+	//UVTransformer* lol =  reinterpret_cast<UVTransformer*>(mappedData.pData);
+	//UVTransformer heh = *lol;
 	pGFX->pImmediateContext->Unmap(pCBuffUV.Get(), 0u);
 }
 
@@ -171,6 +186,24 @@ void GraphicalObject::Rotate(float RotationAngle)
 	this->RotationAngle += RotationAngle;
 }
 
+std::vector<DirectX::XMFLOAT2> GraphicalObject::GetVertecies()
+{
+	std::vector<DirectX::XMFLOAT2> ret;
+	PositionTransformer Transform;
+	Transform.transforms = XMMatrixRotationZ(this->RotationAngle)
+		* XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY * proportion, 0);
+	for (int i = 0; i < 4; i++)
+	{
+		XMVECTOR vec = XMLoadFloat2(&CollisionRectangle.Vectors[i]);
+		XMVECTOR res = XMVector2Transform(vec, Transform.transforms);
+		XMFLOAT2 FinalVec;
+		XMStoreFloat2(&FinalVec, res);
+
+		ret.push_back(FinalVec);
+	}
+	return ret;
+}
+
 void GraphicalObject::Draw()
 {
 	const UINT stride = sizeof(Point);
@@ -181,23 +214,30 @@ void GraphicalObject::Draw()
 		pGFX->resize = false;
 		this->proportion = (float)pGFX->width / (float)pGFX->height;
 	}
+
 	// Update Transform Matrix
+	//multiplicating transY by proportion to keep the relation of offsetY the rest of graphical object the way it was before multiplication 
 		PositionTransformer TransformMap;
-		TransformMap.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle) 
-		* XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
+		TransformMap.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle)
+			* XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY*proportion, 0));
+
+
 		D3D11_MAPPED_SUBRESOURCE	mappedData;
 		hr = pGFX->pImmediateContext->Map(pCBuffTranform.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedData);
 		memcpy(mappedData.pData, &TransformMap, sizeof(TransformMap));
 		pGFX->pImmediateContext->Unmap(pCBuffTranform.Get(), 0u);
 	//---------------------------------------------------
+
+	pGFX->pImmediateContext->RSSetViewports(1, &(pGFX->vp));
+	pGFX->pImmediateContext->VSSetConstantBuffers(0u, 1u, pCBuffTranform.GetAddressOf());
+	pGFX->pImmediateContext->PSSetConstantBuffers(0u, 1u, pCBuffUV.GetAddressOf());
 	pGFX->pImmediateContext->IASetInputLayout(pInputLayout.Get());
 	pGFX->pImmediateContext->IASetIndexBuffer(pIndexBuffer.Get(),DXGI_FORMAT_R16_UINT,0u);
 	pGFX->pImmediateContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset);
-	pGFX->pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	pGFX->pImmediateContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
 	pGFX->pImmediateContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
 	pGFX->pImmediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-	pGFX->pImmediateContext->PSSetShaderResources(0u, 1u, pTextureView.GetAddressOf());
+	pGFX->pImmediateContext->PSSetShaderResources(0, 1u, pTextureView.GetAddressOf());
 	pGFX->pImmediateContext->PSSetSamplers(0, 1, pSampler.GetAddressOf());
 	pGFX->pImmediateContext->DrawIndexed(indicies.size(),0u,0u);
 }

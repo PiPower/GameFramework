@@ -133,7 +133,7 @@ void Graphics::EndFrame()
 
 void Graphics::BeginFrame()
 {
-	const float color[] = { 1,1,1,1 };
+	const float color[] = { 87.0f/255,86.0f / 242,1,1};
 	pImmediateContext->ClearRenderTargetView(pRenderTargetView.Get(), color);
 	//d2RenderTarget->BeginDraw();
 }
@@ -159,8 +159,6 @@ void Graphics::Resize(HWND hwnd, int width, int height)
 	vp.Height = this->height;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
-
-	pImmediateContext->RSSetViewports(1, &vp);
 	resize = true;
 }
 

@@ -6,11 +6,11 @@ using namespace DirectX;
 std::vector<Point> GraphicalObject::Rectangle;
 bool  GraphicalObject::init = false;
 
-GraphicalObject::GraphicalObject(Graphics* gfx, float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle, ImageFile* imgFile)
+GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile,float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle)
 	:
  pGFX(gfx), Img(imgFile),OffsetX(OffsetX), OffsetY(OffsetY),ScaleX(ScaleX), ScaleY(ScaleY),RotationAngle(RotationAngle)
 {
-	this->proportion = (float)pGFX->height / pGFX->width;
+	this->proportion = (float)pGFX->width/ (float)pGFX->height;
 
 	indicies.push_back(0); indicies.push_back(1); indicies.push_back(3);
 	indicies.push_back(0); indicies.push_back(3); indicies.push_back(2);
@@ -121,7 +121,8 @@ GraphicalObject::GraphicalObject(Graphics* gfx, float OffsetX, float OffsetY, fl
 	pGFX->pDevice->CreateBuffer(&cbd, &sbd3, &pCBuffUV);
 	pGFX->pImmediateContext->PSSetConstantBuffers(0u, 1u, pCBuffUV.GetAddressOf());
 
-	PosTranform.transforms = XMMatrixTranspose( XMMatrixScaling(proportion * ScaleX, ScaleY, 0) * XMMatrixRotationZ(RotationAngle) + XMMatrixTranslation(OffsetX, OffsetY, 0));
+	PosTranform.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle)
+	*XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0)  *XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
 
 
 	D3D11_BUFFER_DESC cbd2 = {};
@@ -132,8 +133,9 @@ GraphicalObject::GraphicalObject(Graphics* gfx, float OffsetX, float OffsetY, fl
 	cbd2.StructureByteStride = 0u;
 	D3D11_SUBRESOURCE_DATA sbd4;
 	sbd4.pSysMem = &PosTranform;
-	pGFX->pDevice->CreateBuffer(&cbd, &sbd3, &pCBuffTranform);
-	pGFX->pImmediateContext->VSSetConstantBuffers(1u, 1u, pCBuffTranform.GetAddressOf());
+	hr = pGFX->pDevice->CreateBuffer(&cbd2, &sbd4, &pCBuffTranform);
+	pGFX->pImmediateContext->VSSetConstantBuffers(0u, 1u, pCBuffTranform.GetAddressOf());
+
 }
 
 void GraphicalObject::SetUVcord( float LowerBoundX, float HigherBoundX, float LowerBoundY,float HigherBoundY)
@@ -152,32 +154,42 @@ void GraphicalObject::SetUVcord( float LowerBoundX, float HigherBoundX, float Lo
 	pGFX->pImmediateContext->Unmap(pCBuffUV.Get(), 0u);
 }
 
+void GraphicalObject::Move(float OffsetX, float OffsetY)
+{
+	this->OffsetX += OffsetX;
+	this->OffsetY += OffsetY;
+}
+
+void GraphicalObject::Scale(float ScaleX, float ScaleY)
+{
+	this->ScaleX *= ScaleX;
+	this->ScaleY *= ScaleY;
+}
+
+void GraphicalObject::Rotate(float RotationAngle)
+{
+	this->RotationAngle += RotationAngle;
+}
+
 void GraphicalObject::Draw()
 {
 	const UINT stride = sizeof(Point);
 	const UINT offset = 0u;
 	HRESULT hr;
-	/*struct ConstantBuffer
+	if (pGFX->resize == true)
 	{
-		double dx, dy;
-		double scale;
-		int iterations;
-	};
-
-	const ConstantBuffer cbuff{ OffsetX,OffsetY,Scale,Iterations };
-	ComPtr<ID3D11Buffer>cbuffer;
-	D3D11_BUFFER_DESC bd = {};
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bd.MiscFlags = 0;
-	bd.ByteWidth = sizeof(cbuff);
-	bd.StructureByteStride = 0;
-	D3D11_SUBRESOURCE_DATA sbd = {};
-	sbd.pSysMem = &cbuff;
-	hr = pGFX->pDevice->CreateBuffer(&bd, &sbd, &cbuffer);*/
-
-
+		pGFX->resize = false;
+		this->proportion = (float)pGFX->width / (float)pGFX->height;
+	}
+	// Update Transform Matrix
+		PositionTransformer TransformMap;
+		TransformMap.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle) 
+		* XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
+		D3D11_MAPPED_SUBRESOURCE	mappedData;
+		hr = pGFX->pImmediateContext->Map(pCBuffTranform.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedData);
+		memcpy(mappedData.pData, &TransformMap, sizeof(TransformMap));
+		pGFX->pImmediateContext->Unmap(pCBuffTranform.Get(), 0u);
+	//---------------------------------------------------
 	pGFX->pImmediateContext->IASetInputLayout(pInputLayout.Get());
 	pGFX->pImmediateContext->IASetIndexBuffer(pIndexBuffer.Get(),DXGI_FORMAT_R16_UINT,0u);
 	pGFX->pImmediateContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset);

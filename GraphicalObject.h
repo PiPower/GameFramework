@@ -6,10 +6,12 @@
 class GraphicalObject
 {
 public:
-	GraphicalObject(Graphics* gfx, float OffsetX, float OffsetY, float ScaleX,float ScaleY,
-	float RotationAngle,ImageFile* imgFile);
-
+	GraphicalObject(Graphics* gfx, ImageFile* imgFile, float OffsetX=0, float OffsetY=0, float ScaleX=1,float ScaleY=1,
+	float RotationAngle=0);
 	void SetUVcord(float LowerBoundX, float HigherBoundX, float LowerBoundY, float HigherBoundY);
+	void Move(float OffsetX = 0, float OffsetY = 0);
+	void Scale(float ScaleX = 1, float ScaleY = 1);
+	void Rotate(float RotationAngle);
 	void Draw();
 protected:
 	struct UVTransformer

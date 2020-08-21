@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-void Entity::UpdatePos(Window* wnd,float Time)
+void Entity::UpdatePos(Window* wnd,float Time, Camera& cam)
 {
 	float VecX=0;
 	float VecY = 0;
@@ -20,6 +20,8 @@ void Entity::UpdatePos(Window* wnd,float Time)
 
 	if (ret) Move(-VecX, -VecY);
 
+
+	if (lel[0].x +cam.OffsetX < -0.3 || lel[1].x + cam.OffsetX> 0.3) cam.UpdateOffsets(-VecX);
 
 	// Animation Stuff-------------------------------------------------
 	if (VecX == 0 && VecY == 0)

@@ -5,18 +5,25 @@ using namespace DirectX;
 
 std::vector<Point> GraphicalObject::Rectangle;
 GraphicalObject::CollRect GraphicalObject::CollisionRectangle;
+std::vector<unsigned short> GraphicalObject::indicies;
+float GraphicalObject::proportion;
 bool  GraphicalObject::init = false;
+ComPtr<ID3D11Buffer> GraphicalObject::pVertexBuffer;
 
 GraphicalObject::GraphicalObject(Graphics* gfx, std::wstring& path, float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle)
 	:
 	pGFX(gfx), OffsetX(OffsetX), OffsetY(OffsetY), ScaleX(ScaleX), ScaleY(ScaleY), RotationAngle(RotationAngle)
 {
-	this->proportion = (float)pGFX->width / (float)pGFX->height;
 	Img = new ImageFile(path.c_str());
 	assert(gfx != nullptr);
-	
+	HRESULT hr;
+
 	Topology = Topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
+	if (!GraphicalObject::init)
+	{
+	this->proportion = (float)pGFX->width / (float)pGFX->height;
+	// ---------Creating Collision Vecotr-------------------------------------------------
 	CollisionRectangle.Vectors[0].x = -1.0f;
 	CollisionRectangle.Vectors[0].y = 1.0f;
 
@@ -29,29 +36,30 @@ GraphicalObject::GraphicalObject(Graphics* gfx, std::wstring& path, float Offset
 	CollisionRectangle.Vectors[3].x = 1.0f;
 	CollisionRectangle.Vectors[3].y = -1.0f;
 
+	// ---------Creating indicies-------------------------------------------------
 	indicies.push_back(0); indicies.push_back(1); indicies.push_back(3);
 	indicies.push_back(0); indicies.push_back(3); indicies.push_back(2);
 	//---------- Creating Rect-------------------------------------------------------------
-	if (!GraphicalObject::init)
-	{
+
 	     Rectangle.push_back(Point(-1, 1, 0, 0));
 	     Rectangle.push_back(Point(1, 1, 1, 0));
 	     Rectangle.push_back(Point(-1, -1, 0, 1));
 	     Rectangle.push_back(Point(1, -1, 1, 1));
+
+
+		 D3D11_BUFFER_DESC bd = {};
+		 bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		 bd.Usage = D3D11_USAGE_DEFAULT;
+		 bd.CPUAccessFlags = 0;
+		 bd.ByteWidth = Rectangle.size() * sizeof(Point);
+		 bd.StructureByteStride = sizeof(Point);
+		 D3D11_SUBRESOURCE_DATA sbd = {};
+		 sbd.pSysMem = Rectangle.data();
+		 pGFX->pDevice->CreateBuffer(&bd, &sbd, &pVertexBuffer);
 	}
 
 	GraphicalObject::init = true;
 
-	HRESULT hr;
-	D3D11_BUFFER_DESC bd = {};
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.CPUAccessFlags = 0;
-	bd.ByteWidth = Rectangle.size() * sizeof(Point);
-	bd.StructureByteStride = sizeof(Point);
-	D3D11_SUBRESOURCE_DATA sbd = {};
-	sbd.pSysMem = Rectangle.data();
-	pGFX->pDevice->CreateBuffer(&bd, &sbd, &pVertexBuffer);
 
 	// Creating Vertex shader-------------------------------------------------------------
 	ComPtr<ID3DBlob> pBlob;
@@ -137,8 +145,8 @@ GraphicalObject::GraphicalObject(Graphics* gfx, std::wstring& path, float Offset
 	pGFX->pDevice->CreateBuffer(&cbd, &sbd3, &pCBuffUV);
 
 	PosTranform.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle)
-	*XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0)  *XMMatrixTranslation(this->OffsetX, this->OffsetY * proportion, 0));
-
+	*XMMatrixScaling(this->ScaleX, this->ScaleY, 0)  *XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
+	PosTranform.proportion = this->proportion;
 
 	D3D11_BUFFER_DESC cbd2 = {};
 	cbd2.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -194,7 +202,7 @@ std::vector<DirectX::XMFLOAT2> GraphicalObject::GetVertecies()
 	std::vector<DirectX::XMFLOAT2> ret;
 	PositionTransformer Transform;
 	Transform.transforms = XMMatrixRotationZ(this->RotationAngle)
-		* XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY * proportion, 0);
+		* XMMatrixScaling(this->ScaleX, this->ScaleY, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY, 0);
 	for (int i = 0; i < 4; i++)
 	{
 		XMVECTOR vec = XMLoadFloat2(&CollisionRectangle.Vectors[i]);
@@ -222,18 +230,15 @@ void GraphicalObject::Draw()
 	const UINT stride = sizeof(Point);
 	const UINT offset = 0u;
 	HRESULT hr;
-	if (pGFX->resize == true)
-	{
-		pGFX->resize = false;
-		this->proportion = (float)pGFX->width / (float)pGFX->height;
-	}
+	this->proportion = (float)pGFX->width / (float)pGFX->height;
+	
 
 	// Update Transform Matrix
 	//multiplicating transY by proportion to keep the relation of offsetY the rest of graphical object the way it was before multiplication 
 		PositionTransformer TransformMap;
 		TransformMap.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle)
-			* XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY*proportion, 0));
-
+			* XMMatrixScaling(this->ScaleX, this->ScaleY , 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
+		TransformMap.proportion = this->proportion;
 
 		D3D11_MAPPED_SUBRESOURCE	mappedData;
 		hr = pGFX->pImmediateContext->Map(pCBuffTranform.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedData);

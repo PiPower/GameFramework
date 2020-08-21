@@ -19,6 +19,7 @@ struct Point
 
 class Graphics
 {
+	friend class Camera;
 	friend class BoardMenager;
 	friend class GraphicalObject;
 public:

@@ -61,7 +61,7 @@ public:
 public:
 	Window(int width, int height, std::wstring CLassName, std::wstring WndName);
 	int ProcessMessages() noexcept;
-	void DoFrame();
+	void SetFPS();
 	void DrawMessageBox(std::wstring mes);
 	~Window();
 	// Keyboard ------------------------------------

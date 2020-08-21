@@ -10,13 +10,23 @@ pGFX(pGFX), OffsetX(0), OffsetY(0), ScaleX(1), ScaleY(1), RotationAngle(0),Block
 		this->proportion = (float)pGFX->width / (float)pGFX->height;
 
 
-		for (float y = -1.0f; y < 1.0f; y += BlockScale * 2.0f)
+		for (float y = BlockScale; y < 1.0f; y += BlockScale * 2.0f)
+		{
+			Lines.emplace_back(Line{ -1, y, 0, 0, 0 });
+			Lines.emplace_back(Line{ 1, y, 0, 0, 0 });
+		}
+		for (float y = -BlockScale; y > -1.0f; y -= BlockScale * 2.0f)
 		{
 			Lines.emplace_back(Line{ -1, y, 0, 0, 0 });
 			Lines.emplace_back(Line{ 1, y, 0, 0, 0 });
 		}
 
-		for (float x = -1.0f; x < 1.0f; x += BlockScale * 2)
+		for (float x = BlockScale; x < 1.0f; x += BlockScale * 2)
+		{
+			Lines.emplace_back(Line{ x, -1, 0, 0, 0 });
+			Lines.emplace_back(Line{ x, 1, 0, 0, 0 });
+		}
+		for (float x = -BlockScale; x > -1.0f; x -= BlockScale * 2)
 		{
 			Lines.emplace_back(Line{ x, -1, 0, 0, 0 });
 			Lines.emplace_back(Line{ x, 1, 0, 0, 0 });
@@ -50,8 +60,8 @@ pGFX(pGFX), OffsetX(0), OffsetY(0), ScaleX(1), ScaleY(1), RotationAngle(0),Block
 		D3DReadFileToBlob(L"VanillaPixelShader.cso", &pBlob);
 		hr = pGFX->pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader);
 
-		PosTranform.transforms = XMMatrixTranspose(XMMatrixScaling(this->ScaleX, this->ScaleY * proportion, 0));
-
+		PosTranform.transforms = XMMatrixTranspose(XMMatrixScaling(this->ScaleX, this->ScaleY, 0));
+		PosTranform.proportion = this->proportion;
 
 		D3D11_BUFFER_DESC cbd2 = {};
 		cbd2.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -65,27 +75,26 @@ pGFX(pGFX), OffsetX(0), OffsetY(0), ScaleX(1), ScaleY(1), RotationAngle(0),Block
 
 }
 
-void BoardMenager::AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd,std::wstring path)
+void BoardMenager::AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd,std::wstring path,Camera& cam)
 {
 	while (!wnd->IsMouseEventEmpty())
 	{
 		const auto e = wnd->ReadMouseEvent();
 		if (e.Type == Window::MouseEvent::Event::LeftPress)
 		{
-			float PosX = wnd->GetMousePosXNormalized()+1;
-			float PosY = wnd->GetMousePosYNormalized()+1;
+			float PosX = wnd->GetMousePosXNormalized();
+			float PosY = wnd->GetMousePosYNormalized()/proportion;
 
-			int BlockNumbX = PosX / (BlockScale * 2);
-			int BlockNumbY = PosY  /( BlockScale * 2*proportion);
+			int BlockNumbX = floor( (PosX+ BlockScale) / (BlockScale * 2));
+			int BlockNumbY = floor((PosY+ BlockScale) /( BlockScale * 2));
 
 			GraphicalObject* NewRect = new GraphicalObject(wnd->pDx11, path,
-			(-1.0f + BlockScale )+ BlockNumbX * BlockScale*2, (-1.0f + BlockScale) + (7.0f + BlockNumbY) * BlockScale * 2, BlockScale, BlockScale, 0);
-			//( (-1.0f + BlockScale) +(1.0f+ BlockNumbY)* BlockScale * 2)
-			//GraphicalObject* NewRect = new GraphicalObject(wnd->pDx11, path,
-				//0, 0, BlockScale, BlockScale, 0);
+				BlockNumbX* BlockScale * 2-cam.OffsetX, BlockNumbY * BlockScale * 2 - cam.OffsetY, BlockScale, BlockScale, 0);
+			
 
-			NewRect->SetUVcord(272, 287, 112, 127);
+			NewRect->SetUVcord(193, 208, 1, 16);
 
+			auto Rl = NewRect->GetVertecies();
 			Rects.push_back(NewRect);
 
 
@@ -98,11 +107,18 @@ void BoardMenager::Draw()
 	const UINT stride = sizeof(Line);
 	const UINT offset = 0u;
 	HRESULT hr;
-	if (pGFX->resize == true)
-	{
-		pGFX->resize = false;
-		this->proportion = (float)pGFX->width / (float)pGFX->height;
-	}
+
+		
+	this->proportion = (float)pGFX->width / (float)pGFX->height;
+	PositionTransformer TransformMap;
+	TransformMap.transforms = XMMatrixTranspose(XMMatrixRotationZ(this->RotationAngle)
+		* XMMatrixScaling(this->ScaleX, this->ScaleY, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY, 0));
+	TransformMap.proportion = this->proportion;
+
+	D3D11_MAPPED_SUBRESOURCE	mappedData;
+	hr = pGFX->pImmediateContext->Map(pCBuffTranform.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &mappedData);
+	memcpy(mappedData.pData, &TransformMap, sizeof(TransformMap));
+	pGFX->pImmediateContext->Unmap(pCBuffTranform.Get(), 0u);
 
 	pGFX->pImmediateContext->RSSetViewports(1, &(pGFX->vp));
 	pGFX->pImmediateContext->VSSetConstantBuffers(0u, 1u, pCBuffTranform.GetAddressOf());

@@ -3,17 +3,19 @@
 #include "GraphicalObject.h"
 #include <vector>
 #include "Window.h"
+#include "Camera.h"
 
 class BoardMenager
 {
 public:
 	BoardMenager(Graphics* pGFX,float BlockScale);
-	void AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd, std::wstring path);
+	void AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd, std::wstring path,Camera& cam);
 	void Draw();
 private:
 	struct PositionTransformer
 	{
 		DirectX::XMMATRIX transforms;
+		float proportion;
 	};
 	struct Line
 	{

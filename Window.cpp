@@ -57,7 +57,7 @@ int Window::ProcessMessages() noexcept
 	return 0;
 }
 
-void Window::DoFrame()
+void Window::SetFPS()
 {
 	while (!IsMouseEventEmpty())
 	{

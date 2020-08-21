@@ -1,7 +1,7 @@
 #pragma once
 #include "GraphicalObject.h"
 #include "Window.h"
-
+#include "Camera.h"
 class Entity : public GraphicalObject
 {
 	enum LastDirection
@@ -12,7 +12,7 @@ class Entity : public GraphicalObject
 	};
 public:
 	using::GraphicalObject::GraphicalObject;
-	void UpdatePos(Window* wnd,float Time);
+	void UpdatePos(Window* wnd,float Time,Camera& cam);
 	void Collision();
 private:
 	float VelX= 0.2;

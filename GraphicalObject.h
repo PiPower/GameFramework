@@ -25,6 +25,7 @@ protected:
 	struct PositionTransformer
 	{
 		DirectX::XMMATRIX transforms;
+		float proportion;
 	};
 	struct CollRect
 	{
@@ -35,10 +36,6 @@ protected:
 
 	UVTransformer  UVTransform;
 	PositionTransformer PosTranform;
-	static std::vector<Point> Rectangle;
-	static CollRect  CollisionRectangle;
-	float proportion;
-	static bool init;
 	float OffsetX;
 	float OffsetY;
 	float ScaleX;
@@ -46,12 +43,16 @@ protected:
 	float RotationAngle;
 	Graphics* const pGFX = nullptr;
 	ImageFile* Img = nullptr;
-	std::vector<unsigned short> indicies;
+	static std::vector<Point> Rectangle;
+	static CollRect  CollisionRectangle;
+	static float proportion;
+	static bool init;
+	static std::vector<unsigned short> indicies;
 
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> pInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pPixelShader;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> pVertexShader;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pVertexBuffer;
+	static Microsoft::WRL::ComPtr<ID3D11Buffer> pVertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> pIndexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> pTexture;

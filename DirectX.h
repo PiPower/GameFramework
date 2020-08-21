@@ -19,6 +19,7 @@ struct Point
 
 class Graphics
 {
+	friend class BoardMenager;
 	friend class GraphicalObject;
 public:
 	Graphics(HWND hwnd, int height, int width);

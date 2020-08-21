@@ -7,14 +7,16 @@ std::vector<Point> GraphicalObject::Rectangle;
 GraphicalObject::CollRect GraphicalObject::CollisionRectangle;
 bool  GraphicalObject::init = false;
 
-GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile, float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle)
+GraphicalObject::GraphicalObject(Graphics* gfx, std::wstring& path, float OffsetX, float OffsetY, float ScaleX, float ScaleY, float RotationAngle)
 	:
-	pGFX(gfx), Img(imgFile), OffsetX(OffsetX), OffsetY(OffsetY), ScaleX(ScaleX), ScaleY(ScaleY), RotationAngle(RotationAngle)
+	pGFX(gfx), OffsetX(OffsetX), OffsetY(OffsetY), ScaleX(ScaleX), ScaleY(ScaleY), RotationAngle(RotationAngle)
 {
 	this->proportion = (float)pGFX->width / (float)pGFX->height;
-
+	Img = new ImageFile(path.c_str());
 	assert(gfx != nullptr);
 	
+	Topology = Topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
 	CollisionRectangle.Vectors[0].x = -1.0f;
 	CollisionRectangle.Vectors[0].y = 1.0f;
 
@@ -84,8 +86,8 @@ GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile, float Offset
 
 	// Creating Texture-------------------------------------------------------------
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = imgFile->GetWidth();
-	textureDesc.Height = imgFile->GetHeight();
+	textureDesc.Width = Img->GetWidth();
+	textureDesc.Height = Img->GetHeight();
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -96,9 +98,9 @@ GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile, float Offset
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA sd = {};
-	sd.pSysMem = imgFile->GetFilePtr();
+	sd.pSysMem = Img->GetFilePtr();
 
-	sd.SysMemPitch = imgFile->GetWidth() * sizeof(unsigned int);
+	sd.SysMemPitch = Img->GetWidth() * sizeof(unsigned int);
     pGFX->pDevice->CreateTexture2D(&textureDesc, &sd, &pTexture );
 
 	// create the resource view on the texture
@@ -149,6 +151,7 @@ GraphicalObject::GraphicalObject(Graphics* gfx, ImageFile* imgFile, float Offset
 	hr = pGFX->pDevice->CreateBuffer(&cbd2, &sbd4, &pCBuffTranform);
 
 }
+
 //Give number area in pixel cord u want to draw 
 void GraphicalObject::SetUVcord( int LowerBoundX, int HigherBoundX, int LowerBoundY, int HigherBoundY)
 {
@@ -204,6 +207,16 @@ std::vector<DirectX::XMFLOAT2> GraphicalObject::GetVertecies()
 	return ret;
 }
 
+GraphicalObject::~GraphicalObject()
+{
+	if (Img != nullptr)
+	{
+		delete Img;
+		Img = nullptr;
+	}
+
+}
+
 void GraphicalObject::Draw()
 {
 	const UINT stride = sizeof(Point);
@@ -236,7 +249,7 @@ void GraphicalObject::Draw()
 	pGFX->pImmediateContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset);
 	pGFX->pImmediateContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
 	pGFX->pImmediateContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
-	pGFX->pImmediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+	pGFX->pImmediateContext->IASetPrimitiveTopology(Topology);
 	pGFX->pImmediateContext->PSSetShaderResources(0, 1u, pTextureView.GetAddressOf());
 	pGFX->pImmediateContext->PSSetSamplers(0, 1, pSampler.GetAddressOf());
 	pGFX->pImmediateContext->DrawIndexed(indicies.size(),0u,0u);

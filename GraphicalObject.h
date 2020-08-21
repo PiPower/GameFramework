@@ -6,13 +6,13 @@
 class GraphicalObject
 {
 public:
-	GraphicalObject(Graphics* gfx, ImageFile* imgFile, float OffsetX=0, float OffsetY=0, float ScaleX=1,float ScaleY=1,
-	float RotationAngle=0);
+	GraphicalObject(Graphics* gfx, std::wstring& path, float OffsetX=0, float OffsetY=0, float ScaleX=1,float ScaleY=1,float RotationAngle=0);
 	void SetUVcord(int LowerBoundX, int HigherBoundX, int LowerBoundY, int HigherBoundY);
 	void Move(float OffsetX = 0, float OffsetY = 0);
 	void Scale(float ScaleX = 1, float ScaleY = 1);
 	void Rotate(float RotationAngle);
 	std::vector<DirectX::XMFLOAT2> GetVertecies();
+	~GraphicalObject();
 	void Draw();
 protected:
 	struct UVTransformer
@@ -58,5 +58,6 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> pSampler;
 	Microsoft::WRL::ComPtr<ID3D11Buffer>  pCBuffUV;
 	Microsoft::WRL::ComPtr<ID3D11Buffer>  pCBuffTranform;
+	D3D_PRIMITIVE_TOPOLOGY    Topology;
 };
 

@@ -75,7 +75,7 @@ pGFX(pGFX), OffsetX(0), OffsetY(0), ScaleX(1), ScaleY(1), RotationAngle(0),Block
 
 }
 
-void BoardMenager::AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd,std::wstring path,Camera& cam)
+void BoardMenager::AddBlocks( Window* wnd,std::wstring path,Camera& cam)
 {
 	while (!wnd->IsMouseEventEmpty())
 	{
@@ -95,15 +95,70 @@ void BoardMenager::AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd,
 			NewRect->SetUVcord(193, 208, 1, 16);
 
 			auto Rl = NewRect->GetVertecies();
-			Rects.push_back(NewRect);
+			Blocks.push_back(NewRect);
 
 
 		}
 	}
 }
 
-void BoardMenager::SaveBoard(std::string path, std::vector<GraphicalObject*>& Rects)
+void BoardMenager::DrawBlocks()
 {
+	for (auto& b : Blocks)
+	{
+		b->Draw();
+	}
+}
+
+void BoardMenager::SaveBoard(std::string path)
+{
+	std::fstream stream(path, std::ios::out| std::ios::trunc);
+	for (auto& p : Blocks)
+	{
+		p->Save(stream);
+	}
+	stream.close();
+}
+
+void BoardMenager::LoadBoard(std::string path,std::wstring TexPath)
+{
+	std::fstream stream(path, std::ios::in );
+	std::string Line;
+	while (std::getline(stream, Line))
+	{
+		std::string substring="";
+		std::vector<float> elements;
+
+		for (int i = 0; i < Line.size();i++)
+		{
+			char c = Line[i];
+			if (c != ' ' && c != '\n')
+			{
+				substring += Line[i];
+			}
+			else
+			{
+				elements.push_back(std::stof(substring));
+				substring = "";
+			}
+		}
+		elements.push_back(std::stof(substring));
+		substring = "";
+
+		GraphicalObject* p = new GraphicalObject(pGFX, TexPath, elements[0], elements[1], elements[2], elements[3], elements[4]);
+		p->SetUVcord(193, 208, 1, 16);
+		Blocks.push_back(p);
+	}
+
+	stream.close();
+}
+
+BoardMenager::~BoardMenager()
+{
+	for (auto& p : Blocks)
+	{
+		delete p;
+	}
 }
 
 void BoardMenager::Draw()

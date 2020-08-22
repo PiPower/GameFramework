@@ -192,7 +192,6 @@ void GraphicalObject::Save(std::fstream& stream)
 	stream << ' ';
 	stream << RotationAngle;
 	stream << '\n';
-	stream.close();
 }
 
 void GraphicalObject::Scale(float ScaleX, float ScaleY)

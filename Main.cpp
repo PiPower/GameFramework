@@ -7,45 +7,31 @@
 
 using namespace std::chrono;
 
-void Draw(Window* wnd, GraphicalObject* obj, std::vector<GraphicalObject* >& Blocks,BoardMenager* brd, Camera* cam);
+void Draw(Window* wnd, GraphicalObject* obj, BoardMenager* brd, Camera* cam);
 
-bool CreationMode = false;
+bool CreationMode = true;
 int main()
 {
-
+	bool Save = false;
+	bool Load = true;
 	int NrBlocksX = 40;
 	float BlockScale = 1.0f/ NrBlocksX;
 
 	Window* wnd = new Window(1600, 900,L"okno",L"HUJ");
 	wnd->InitDx11();
+
 	Camera cam(wnd->pDx11,0.2, 0.2);
 
 	std::wstring pathMario=L"D:\\C++\\Programy C++\\GameFramework\\Mario.png";
 	std::wstring pathBlocks = L"D:\\C++\\Programy C++\\GameFramework\\Blocks.png";
 
-
-	std::vector<GraphicalObject* > Blocks;
-	std::fstream lul("Blocks.txt", std::ios::out | std::ios::trunc);
-
-	   float offsetY = 0;
-		for (int i = 0; i < 1; i++)
-		{
-			Blocks.emplace_back(new GraphicalObject(wnd->pDx11, pathBlocks, 0,0, BlockScale, BlockScale, 0));
-			Blocks[i]->SetUVcord(193, 208, 1, 16);
-			Blocks[i]->Save(lul);
-		}
-		
-
-
 	Entity Mario(wnd->pDx11, pathMario,0, 0.3, BlockScale*0.90, BlockScale * 0.90, 0);
 	Mario.SetUVcord(83,94,162,178);
 
 	BoardMenager Menager(wnd->pDx11, BlockScale);
-
+	if(Load)Menager.LoadBoard("Blocks.txt", pathBlocks);
 
 	auto last = high_resolution_clock::now();
-
-
 	while (wnd->ProcessMessages()==0)
 	{
 		const auto old = last;
@@ -69,32 +55,25 @@ int main()
 			if (wnd->IsKeyPressed(VK_RIGHT)) cam.UpdateOffsets(-BlockScale * 2, 0);
 			if (wnd->IsKeyPressed(VK_LEFT)) cam.UpdateOffsets(BlockScale * 2, 0);
 
-			Menager.AddBlocks(Blocks, wnd, pathBlocks, cam);
+			Menager.AddBlocks( wnd, pathBlocks, cam);
 		}
-		else
-		{
-			Mario.UpdatePos(wnd, frameTime.count(), cam, Blocks);
-			Draw(wnd, &Mario, Blocks, &Menager, &cam);
-		}
+		else Mario.UpdatePos(wnd, frameTime.count(), cam, Menager.GetBlocks());
+
+			Draw(wnd, &Mario, &Menager, &cam);
+		
 
 	}
 
-	for (auto& p : Blocks)
-	{
-		delete p;
-	}
+	if(Save) Menager.SaveBoard("Blocks.txt");
 }
 
-void Draw(Window* wnd,GraphicalObject* Mario, std::vector<GraphicalObject*>& Blocks, BoardMenager* brd,Camera* cam)
+void Draw(Window* wnd,GraphicalObject* Mario, BoardMenager* brd,Camera* cam)
 {
 	wnd->BeginFrame();
 
 	cam->BindConstBuffer();
 
-	for (auto& p : Blocks)
-	{
-		p->Draw();
-	}
+	brd->DrawBlocks();
 
 	if(CreationMode)brd->Draw();
 

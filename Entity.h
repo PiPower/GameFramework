@@ -19,7 +19,7 @@ private:
 	bool DynamicRectVsRect(const CollRect& in, DirectX::XMFLOAT2& Velocity,const CollRect& target, DirectX::XMFLOAT2& contact_point,
 		DirectX::XMFLOAT2& contact_normal, float& contact_time);
 private:
-	float VelX= 0.2;
+	float VelX= 0.4;
 	float VelY= 1.0f;
 	bool Jump = false;
 	float JumpFactor = 0.0f;

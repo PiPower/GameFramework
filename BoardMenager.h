@@ -9,8 +9,12 @@ class BoardMenager
 {
 public:
 	BoardMenager(Graphics* pGFX,float BlockScale);
-	void AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd, std::wstring path,Camera& cam);
-	void SaveBoard(std::string path, std::vector<GraphicalObject* >& Rects);
+	void AddBlocks(Window* wnd, std::wstring path,Camera& cam);
+	void DrawBlocks();
+	void SaveBoard(std::string path);
+	void LoadBoard(std::string path, std::wstring TexPath);
+	std::vector<GraphicalObject* >& GetBlocks() { return Blocks;  }
+	~BoardMenager();
 	void Draw();
 private:
 	struct PositionTransformer

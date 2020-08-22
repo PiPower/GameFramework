@@ -64,7 +64,7 @@ void Entity::UpdatePos(Window* wnd,float Time, Camera& cam,std::vector<Graphical
 
 	auto PlayerRect = GetVertecies();
 	float Time2 = MoveVec.y * Time;
-	if (PlayerRect.TopLeft.x < -0.3 || PlayerRect.BottomRight.x > 0.3)  cam.UpdateOffsets(-MoveVec.x * Time,0);
+	if (PlayerRect.TopLeft.x + cam.OffsetX < -0.3 || PlayerRect.BottomRight.x + cam.OffsetX > 0.3)  cam.UpdateOffsets(-MoveVec.x * Time,0);
 
 
 	// Animation Stuff-------------------------------------------------

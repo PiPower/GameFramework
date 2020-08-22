@@ -24,21 +24,19 @@ int main()
 	std::wstring pathBlocks = L"D:\\C++\\Programy C++\\GameFramework\\Blocks.png";
 
 
-	std::vector<GraphicalObject* > objs;
+	std::vector<GraphicalObject* > Blocks;
 
 	   float offsetY = 0;
 		for (int i = 0; i < 1; i++)
 		{
-			objs.emplace_back(new GraphicalObject(wnd->pDx11, pathBlocks, 0,0, BlockScale, BlockScale, 0));
-			objs[i]->SetUVcord(193, 208, 1, 16);
+			Blocks.emplace_back(new GraphicalObject(wnd->pDx11, pathBlocks, 0,0, BlockScale, BlockScale, 0));
+			Blocks[i]->SetUVcord(193, 208, 1, 16);
 		}
 		
-		objs.emplace_back(new GraphicalObject(wnd->pDx11, pathBlocks, -0.05, -0.05, BlockScale, BlockScale, 0));
-		objs[objs.size()-1]->SetUVcord(193, 208, 1, 16);
 
 
-	Entity Mario(wnd->pDx11, pathMario, 0, 0, BlockScale, BlockScale, 0);
-	Mario.SetUVcord(81,96,162,178);
+	Entity Mario(wnd->pDx11, pathMario, 0.3, 0.3, BlockScale*0.90, BlockScale * 0.90, 0);
+	Mario.SetUVcord(83,94,162,178);
 
 	BoardMenager Menager(wnd->pDx11, BlockScale);
 
@@ -62,7 +60,7 @@ int main()
 			}
 		}
 
-		Mario.UpdatePos(wnd, frameTime.count(),cam);
+		Mario.UpdatePos(wnd, frameTime.count(),cam, Blocks);
 		if (CreationMode)
 		{
 			if (wnd->IsKeyPressed(VK_UP)) cam.UpdateOffsets(0, -BlockScale * 2);
@@ -70,14 +68,14 @@ int main()
 			if (wnd->IsKeyPressed(VK_RIGHT)) cam.UpdateOffsets(-BlockScale * 2, 0);
 			if (wnd->IsKeyPressed(VK_LEFT)) cam.UpdateOffsets(BlockScale * 2, 0);
 
-			Menager.AddBlocks(objs, wnd, pathBlocks, cam);
+			Menager.AddBlocks(Blocks, wnd, pathBlocks, cam);
 		}
 
-		Draw(wnd,&Mario,objs,&Menager,&cam);
+		Draw(wnd,&Mario, Blocks,&Menager,&cam);
 
 	}
 
-	for (auto& p : objs)
+	for (auto& p : Blocks)
 	{
 		delete p;
 	}

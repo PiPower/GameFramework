@@ -5,15 +5,6 @@
 #include <DirectXMath.h>
 class GraphicalObject
 {
-public:
-	GraphicalObject(Graphics* gfx, std::wstring& path, float OffsetX=0, float OffsetY=0, float ScaleX=1,float ScaleY=1,float RotationAngle=0);
-	void SetUVcord(int LowerBoundX, int HigherBoundX, int LowerBoundY, int HigherBoundY);
-	void Move(float OffsetX = 0, float OffsetY = 0);
-	void Scale(float ScaleX = 1, float ScaleY = 1);
-	void Rotate(float RotationAngle);
-	std::vector<DirectX::XMFLOAT2> GetVertecies();
-	~GraphicalObject();
-	void Draw();
 protected:
 	struct UVTransformer
 	{
@@ -29,11 +20,19 @@ protected:
 	};
 	struct CollRect
 	{
-		DirectX::XMFLOAT2  Vectors[4];
+		DirectX::XMFLOAT2  TopLeft;
+		DirectX::XMFLOAT2  BottomRight;
 	};
+public:
+	GraphicalObject(Graphics* gfx, std::wstring& path, float OffsetX=0, float OffsetY=0, float ScaleX=1,float ScaleY=1,float RotationAngle=0);
+	void SetUVcord(int LowerBoundX, int HigherBoundX, int LowerBoundY, int HigherBoundY);
+	void Move(float OffsetX = 0, float OffsetY = 0);
+	void Scale(float ScaleX = 1, float ScaleY = 1);
+	void Rotate(float RotationAngle);
+	CollRect GetVertecies();
+	~GraphicalObject();
+	void Draw();
 protected:
-	// Edge order: TopLeft,TopRigt,BottomLeft,BottomRight
-
 	UVTransformer  UVTransform;
 	PositionTransformer PosTranform;
 	float OffsetX;

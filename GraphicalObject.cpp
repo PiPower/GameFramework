@@ -24,17 +24,11 @@ GraphicalObject::GraphicalObject(Graphics* gfx, std::wstring& path, float Offset
 	{
 	this->proportion = (float)pGFX->width / (float)pGFX->height;
 	// ---------Creating Collision Vecotr-------------------------------------------------
-	CollisionRectangle.Vectors[0].x = -1.0f;
-	CollisionRectangle.Vectors[0].y = 1.0f;
+	CollisionRectangle.TopLeft.x = -1.0f;
+	CollisionRectangle.TopLeft.y = 1.0f;
 
-	CollisionRectangle.Vectors[1].x = 1.0f;
-	CollisionRectangle.Vectors[1].y = 1.0f;
-
-	CollisionRectangle.Vectors[2].x = -1.0f;
-	CollisionRectangle.Vectors[2].y = -1.0f;
-
-	CollisionRectangle.Vectors[3].x = 1.0f;
-	CollisionRectangle.Vectors[3].y = -1.0f;
+	CollisionRectangle.BottomRight.x = 1.0f;
+	CollisionRectangle.BottomRight.y = -1.0f;
 
 	// ---------Creating indicies-------------------------------------------------
 	indicies.push_back(0); indicies.push_back(1); indicies.push_back(3);
@@ -197,21 +191,27 @@ void GraphicalObject::Rotate(float RotationAngle)
 	this->RotationAngle += RotationAngle;
 }
 
-std::vector<DirectX::XMFLOAT2> GraphicalObject::GetVertecies()
+GraphicalObject::CollRect GraphicalObject::GetVertecies()
 {
-	std::vector<DirectX::XMFLOAT2> ret;
+	CollRect ret;
+
 	PositionTransformer Transform;
 	Transform.transforms = XMMatrixRotationZ(this->RotationAngle)
 		* XMMatrixScaling(this->ScaleX, this->ScaleY, 0) * XMMatrixTranslation(this->OffsetX, this->OffsetY, 0);
-	for (int i = 0; i < 4; i++)
-	{
-		XMVECTOR vec = XMLoadFloat2(&CollisionRectangle.Vectors[i]);
-		XMVECTOR res = XMVector2Transform(vec, Transform.transforms);
-		XMFLOAT2 FinalVec;
-		XMStoreFloat2(&FinalVec, res);
 
-		ret.push_back(FinalVec);
-	}
+	//Top Left--------------------------------------------------
+	XMVECTOR vec = XMLoadFloat2(&CollisionRectangle.TopLeft);
+	XMVECTOR res = XMVector2Transform(vec, Transform.transforms);
+	XMFLOAT2 FinalVec;
+	XMStoreFloat2(&FinalVec, res);
+	ret.TopLeft = FinalVec;
+	//Bottom Right   --------------------------------------------------
+	XMVECTOR vec2 = XMLoadFloat2(&CollisionRectangle.BottomRight);
+	XMVECTOR res2 = XMVector2Transform(vec2, Transform.transforms);
+	XMFLOAT2 FinalVec2;
+	XMStoreFloat2(&FinalVec2, res2);
+	ret.BottomRight = FinalVec2;
+
 	return ret;
 }
 

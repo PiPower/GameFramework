@@ -10,6 +10,7 @@ class BoardMenager
 public:
 	BoardMenager(Graphics* pGFX,float BlockScale);
 	void AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd, std::wstring path,Camera& cam);
+	void SaveBoard(std::string path, std::vector<GraphicalObject* >& Rects);
 	void Draw();
 private:
 	struct PositionTransformer
@@ -38,6 +39,7 @@ private:
 	Graphics* const pGFX = nullptr;
 	std::vector<Line> Lines;
 	PositionTransformer PosTranform;
+	std::vector<GraphicalObject* > Blocks;
 
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> pInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pPixelShader;

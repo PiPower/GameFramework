@@ -25,12 +25,14 @@ int main()
 
 
 	std::vector<GraphicalObject* > Blocks;
+	std::fstream lul("Blocks.txt", std::ios::out | std::ios::trunc);
 
 	   float offsetY = 0;
 		for (int i = 0; i < 1; i++)
 		{
 			Blocks.emplace_back(new GraphicalObject(wnd->pDx11, pathBlocks, 0,0, BlockScale, BlockScale, 0));
 			Blocks[i]->SetUVcord(193, 208, 1, 16);
+			Blocks[i]->Save(lul);
 		}
 		
 
@@ -60,7 +62,6 @@ int main()
 			}
 		}
 
-		Mario.UpdatePos(wnd, frameTime.count(),cam, Blocks);
 		if (CreationMode)
 		{
 			if (wnd->IsKeyPressed(VK_UP)) cam.UpdateOffsets(0, -BlockScale * 2);
@@ -70,8 +71,11 @@ int main()
 
 			Menager.AddBlocks(Blocks, wnd, pathBlocks, cam);
 		}
-
-		Draw(wnd,&Mario, Blocks,&Menager,&cam);
+		else
+		{
+			Mario.UpdatePos(wnd, frameTime.count(), cam, Blocks);
+			Draw(wnd, &Mario, Blocks, &Menager, &cam);
+		}
 
 	}
 

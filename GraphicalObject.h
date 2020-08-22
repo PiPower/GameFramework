@@ -3,6 +3,7 @@
 #include "ImageFile.h"
 #include <vector>
 #include <DirectXMath.h>
+#include <fstream>
 class GraphicalObject
 {
 protected:
@@ -27,6 +28,7 @@ public:
 	GraphicalObject(Graphics* gfx, std::wstring& path, float OffsetX=0, float OffsetY=0, float ScaleX=1,float ScaleY=1,float RotationAngle=0);
 	void SetUVcord(int LowerBoundX, int HigherBoundX, int LowerBoundY, int HigherBoundY);
 	void Move(float OffsetX = 0, float OffsetY = 0);
+	void Save(std::fstream& stream);
 	void Scale(float ScaleX = 1, float ScaleY = 1);
 	void Rotate(float RotationAngle);
 	CollRect GetVertecies();

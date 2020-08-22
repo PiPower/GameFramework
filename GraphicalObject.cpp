@@ -180,6 +180,21 @@ void GraphicalObject::Move(float OffsetX, float OffsetY)
 	this->OffsetY += OffsetY;
 }
 
+void GraphicalObject::Save(std::fstream& stream)
+{
+	stream << OffsetX;
+	stream << ' ';
+	stream << OffsetY;
+	stream << ' ';
+	stream << ScaleX;
+	stream << ' ';
+	stream << ScaleY;
+	stream << ' ';
+	stream << RotationAngle;
+	stream << '\n';
+	stream.close();
+}
+
 void GraphicalObject::Scale(float ScaleX, float ScaleY)
 {
 	this->ScaleX *= ScaleX;

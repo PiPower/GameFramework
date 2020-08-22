@@ -102,6 +102,10 @@ void BoardMenager::AddBlocks(std::vector<GraphicalObject* >& Rects, Window* wnd,
 	}
 }
 
+void BoardMenager::SaveBoard(std::string path, std::vector<GraphicalObject*>& Rects)
+{
+}
+
 void BoardMenager::Draw()
 {
 	const UINT stride = sizeof(Line);

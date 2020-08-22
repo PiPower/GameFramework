@@ -35,7 +35,7 @@ int main()
 		
 
 
-	Entity Mario(wnd->pDx11, pathMario, 0.3, 0.3, BlockScale*0.90, BlockScale * 0.90, 0);
+	Entity Mario(wnd->pDx11, pathMario,0, 0.3, BlockScale*0.90, BlockScale * 0.90, 0);
 	Mario.SetUVcord(83,94,162,178);
 
 	BoardMenager Menager(wnd->pDx11, BlockScale);

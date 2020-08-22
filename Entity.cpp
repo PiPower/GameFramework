@@ -7,14 +7,21 @@ using namespace DirectX;
 
 void Entity::UpdatePos(Window* wnd,float Time, Camera& cam,std::vector<GraphicalObject*>& Blocks)
 {
-	MoveVec = { 0,-0.3f };
+	MoveVec = { 0,-0.6f };
 
 
     if (wnd->IsKeyPressed('D')) MoveVec.x += VelX;
 	if (wnd->IsKeyPressed('A')) MoveVec.x += -VelX ;
 	if (wnd->IsKeyPressed('W'))MoveVec.y += VelY;
 	if (wnd->IsKeyPressed('S')) MoveVec.y +=-VelY;
+	if (wnd->IsKeyPressed(VK_SPACE)&& !Jump)
+	{
+		JumpFactor = 1.0f;
+		Jump = true;
+	}
 
+	MoveVec.y += 3*VelY*JumpFactor;
+	if (JumpFactor != 0) JumpFactor -= 0.1f;
     //Move(MoveVec.x, MoveVec.y);
    // Collision Stuff --------------------------------------------------
 	auto lel = GetVertecies();
@@ -43,13 +50,25 @@ void Entity::UpdatePos(Window* wnd,float Time, Camera& cam,std::vector<Graphical
 		{
 			MoveVec.x += contact_normal.x * (1.0f-contact_time) * abs(MoveVec.x);
 		    MoveVec.y += contact_normal.y * (1.0f-contact_time) * abs(MoveVec.y);
+
+			if (contact_normal.y == 1)
+			{
+				JumpFactor = 0;
+				Jump = false;
+			}
 		}
 	}
 
 
 	Move(MoveVec.x*Time, MoveVec.y*Time);
+
+	auto PlayerRect = GetVertecies();
+	float Time2 = MoveVec.y * Time;
+	if (PlayerRect.TopLeft.x < -0.3 || PlayerRect.BottomRight.x > 0.3)  cam.UpdateOffsets(-MoveVec.x * Time,0);
+
+
 	// Animation Stuff-------------------------------------------------
-	if (MoveVec.x == 0 && MoveVec.y == 0)
+	if (MoveVec.x == 0 && MoveVec.y * Time <= 0 && MoveVec.y * Time>=-0.01f)
 	{
 		if(LastDir == LastDirection::Right)SetUVcord(81, 96, 162, 178);
 		if(LastDir == LastDirection::Left)SetUVcord(96, 81, 162, 178);
